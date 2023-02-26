@@ -108,4 +108,87 @@ void Bloque::minarBloque() {
     double tiempoTotal = difftime(fin, inicio);
 
     cout << "Bloque minado en " << fixed << setprecision(2) << tiempoTotal << " segundos. Hash: " << hashCalculado << endl;
-    cout
+    
+// Limpiar el vector de transacciones
+transacciones.clear();
+
+}
+
+// Función para agregar una transacción al bloque
+void Bloque::agregarTransaccion(Transaccion transaccion) {
+transacciones.push_back(transaccion);
+}
+
+// Función para mostrar las transacciones en un bloque
+void Bloque::mostrarTransacciones() {
+for (int i = 0; i < transacciones.size(); i++) {
+cout << "Remitente: " << transacciones[i].getRemitente() << endl;
+cout << "Destinatario: " << transacciones[i].getDestinatario() << endl;
+cout << "Cantidad: " << transacciones[i].getCantidad() << endl;
+cout << endl;
+}
+}
+
+// Definición de la clase Blockchain
+class Blockchain {
+private:
+vector<Bloque> cadena;
+int dificultad;
+map<string, double> saldos;
+
+public:
+Blockchain(int dificultad);
+
+void agregarBloque(Bloque bloque, string remitente, string destinatario, double cantidad);
+void mostrarCadena();
+bool validarCadena();
+double obtenerSaldo(string direccion);
+
+};
+
+// Constructor de la clase Blockchain
+Blockchain::Blockchain(int dificultad) {
+this->dificultad = dificultad;
+Bloque bloqueGenesis(0, 0, dificultad);
+cadena.push_back(bloqueGenesis);
+}
+
+// Función para agregar un bloque a la cadena
+void Blockchain::agregarBloque(Bloque bloque, string remitente, string destinatario, double cantidad) {
+Transaccion transaccion(remitente, destinatario, cantidad);
+bloque.agregarTransaccion(transaccion);
+bloque.minarBloque();
+cadena.push_back(bloque);
+
+// Actualizar los saldos de los remitentes y destinatarios
+if (saldos.find(remitente) == saldos.end()) {
+    saldos[remitente] = 0.0;
+}
+if (saldos.find(destinatario) == saldos.end()) {
+    saldos[destinatario] = 0.0;
+}
+saldos[remitente] -= cantidad;
+saldos[destinatario] += cantidad;
+
+}
+
+// Función para mostrar la cadena de bloques
+void Blockchain::mostrarCadena() {
+for (int i = 0; i < cadena.size(); i++) {
+cout << "Bloque " << i << endl;
+cout << "Hash anterior: " << cadena[i].getHashAnterior() << endl;
+cout << "Hash: " << cadena[i].getHash() << endl;
+cout << "Tiempo: " << ctime(&cadena[i].getTiempo()) << endl;
+cout << "Transacciones:" << endl;
+cadena[i].mostrarTransacciones();
+cout << endl;
+}
+}
+
+// Función para validar la cadena de bloques
+bool Blockchain::validarCadena() {
+for (int i = 1; i < cadena.size(); i++) {
+Bloque bloqueActual = cadena[i];
+Bloque bloqueAnterior = cadena[i - 1];
+
+    if (bloqueActual.get
