@@ -1,0 +1,92 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <ctime>
+#include <sstream>
+#include <iomanip>
+
+using namespace std;
+
+// Definición de la clase Bloque
+class Bloque {
+private:
+    int index;
+    size_t hashAnterior;
+    size_t hash;
+    time_t tiempo;
+    string datos;
+
+public:
+    Bloque(int index, size_t hashAnterior, string datos);
+
+    size_t calcularHash();
+    void minarBloque(int dificultad);
+    void mostrarDatos();
+};
+
+// Constructor de la clase Bloque
+Bloque::Bloque(int index, size_t hashAnterior, string datos) {
+    this->index = index;
+    this->hashAnterior = hashAnterior;
+    this->tiempo = time(nullptr);
+    this->datos = datos;
+    this->hash = calcularHash();
+}
+
+// Función que calcula el hash del bloque
+size_t Bloque::calcularHash() {
+    stringstream ss;
+    ss << index << hashAnterior << tiempo << datos;
+
+    return hash<string>{}(ss.str());
+}
+
+// Función que realiza la minería del bloque
+void Bloque::minarBloque(int dificultad) {
+    vector<char> objetivo(dificultad + 1);
+    objetivo[0] = '0';
+    for (int i = 1; i < objetivo.size(); i++) {
+        objetivo[i] = '0';
+    }
+
+    string hashCalculado = "";
+    int intentos = 0;
+    time_t inicio = time(nullptr);
+
+    do {
+        hashCalculado = calcularHash();
+        intentos++;
+    } while (hashCalculado.substr(0, dificultad) != string(objetivo.begin(), objetivo.end()));
+
+    time_t fin = time(nullptr);
+    double tiempoTotal = difftime(fin, inicio);
+
+    cout << "Bloque minado en " << fixed << setprecision(2) << tiempoTotal << " segundos. Hash: " << hashCalculado << endl;
+    cout << "Número de intentos: " << intentos << endl;
+}
+
+// Función que muestra los datos del bloque
+void Bloque::mostrarDatos() {
+    cout << "Index: " << index << endl;
+    cout << "Hash anterior: " << hashAnterior << endl;
+    cout << "Tiempo: " << asctime(localtime(&tiempo));
+    cout << "Datos: " << datos << endl;
+    cout << "Hash: " << hash << endl;
+}
+
+// Función principal del programa
+int main() {
+    Bloque bloqueGénesis(0, 0, "Bloque Génesis");
+    bloqueGénesis.minarBloque(4);
+    bloqueGénesis.mostrarDatos();
+
+    Bloque bloque1(1, bloqueGénesis.calcularHash(), "Transacción 1");
+    bloque1.minarBloque(4);
+    bloque1.mostrarDatos();
+
+    Bloque bloque2(2, bloque1.calcularHash(), "Transacción 2");
+    bloque2.minarBloque(4);
+    bloque2.mostrarDatos();
+
+    return 0;
+}
