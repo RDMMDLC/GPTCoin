@@ -4,8 +4,44 @@
 #include <ctime>
 #include <sstream>
 #include <iomanip>
+#include <map>
+#include <random>
 
 using namespace std;
+
+// Definición de la clase Transacción
+class Transaccion {
+private:
+    string remitente;
+    string destinatario;
+    double cantidad;
+
+public:
+    Transaccion(string remitente, string destinatario, double cantidad);
+
+    string getRemitente();
+    string getDestinatario();
+    double getCantidad();
+};
+
+// Constructor de la clase Transacción
+Transaccion::Transaccion(string remitente, string destinatario, double cantidad) {
+    this->remitente = remitente;
+    this->destinatario = destinatario;
+    this->cantidad = cantidad;
+}
+
+string Transaccion::getRemitente() {
+    return this->remitente;
+}
+
+string Transaccion::getDestinatario() {
+    return this->destinatario;
+}
+
+double Transaccion::getCantidad() {
+    return this->cantidad;
+}
 
 // Definición de la clase Bloque
 class Bloque {
@@ -14,35 +50,44 @@ private:
     size_t hashAnterior;
     size_t hash;
     time_t tiempo;
-    string datos;
+    vector<Transaccion> transacciones;
+    int dificultad;
+    int nonce;
 
 public:
-    Bloque(int index, size_t hashAnterior, string datos);
+    Bloque(int index, size_t hashAnterior, int dificultad);
 
     size_t calcularHash();
-    void minarBloque(int dificultad);
-    void mostrarDatos();
+    void minarBloque();
+    void agregarTransaccion(Transaccion transaccion);
+    void mostrarTransacciones();
 };
 
 // Constructor de la clase Bloque
-Bloque::Bloque(int index, size_t hashAnterior, string datos) {
+Bloque::Bloque(int index, size_t hashAnterior, int dificultad) {
     this->index = index;
     this->hashAnterior = hashAnterior;
     this->tiempo = time(nullptr);
-    this->datos = datos;
-    this->hash = calcularHash();
+    this->dificultad = dificultad;
+    this->nonce = 0;
 }
 
 // Función que calcula el hash del bloque
 size_t Bloque::calcularHash() {
     stringstream ss;
-    ss << index << hashAnterior << tiempo << datos;
+    ss << index << hashAnterior << tiempo << nonce;
 
-    return hash<string>{}(ss.str());
+    size_t hash = hash<string>{}(ss.str());
+
+    for (int i = 0; i < transacciones.size(); i++) {
+        hash ^= hash<string>{}(transacciones[i].getRemitente() + transacciones[i].getDestinatario() + to_string(transacciones[i].getCantidad()));
+    }
+
+    return hash;
 }
 
 // Función que realiza la minería del bloque
-void Bloque::minarBloque(int dificultad) {
+void Bloque::minarBloque() {
     vector<char> objetivo(dificultad + 1);
     objetivo[0] = '0';
     for (int i = 1; i < objetivo.size(); i++) {
@@ -54,6 +99,7 @@ void Bloque::minarBloque(int dificultad) {
     time_t inicio = time(nullptr);
 
     do {
+        nonce++;
         hashCalculado = calcularHash();
         intentos++;
     } while (hashCalculado.substr(0, dificultad) != string(objetivo.begin(), objetivo.end()));
@@ -62,31 +108,4 @@ void Bloque::minarBloque(int dificultad) {
     double tiempoTotal = difftime(fin, inicio);
 
     cout << "Bloque minado en " << fixed << setprecision(2) << tiempoTotal << " segundos. Hash: " << hashCalculado << endl;
-    cout << "Número de intentos: " << intentos << endl;
-}
-
-// Función que muestra los datos del bloque
-void Bloque::mostrarDatos() {
-    cout << "Index: " << index << endl;
-    cout << "Hash anterior: " << hashAnterior << endl;
-    cout << "Tiempo: " << asctime(localtime(&tiempo));
-    cout << "Datos: " << datos << endl;
-    cout << "Hash: " << hash << endl;
-}
-
-// Función principal del programa
-int main() {
-    Bloque bloqueGénesis(0, 0, "Bloque Génesis");
-    bloqueGénesis.minarBloque(4);
-    bloqueGénesis.mostrarDatos();
-
-    Bloque bloque1(1, bloqueGénesis.calcularHash(), "Transacción 1");
-    bloque1.minarBloque(4);
-    bloque1.mostrarDatos();
-
-    Bloque bloque2(2, bloque1.calcularHash(), "Transacción 2");
-    bloque2.minarBloque(4);
-    bloque2.mostrarDatos();
-
-    return 0;
-}
+    cout
